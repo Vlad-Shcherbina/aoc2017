@@ -11,6 +11,7 @@ fn main() {
         )).unwrap();
 
     let mut regs = HashMap::<String, i32>::new();
+    let mut highest = 0;
 
     for line in stdin.lock().lines() {
         let line = line.unwrap();
@@ -44,6 +45,8 @@ fn main() {
             s if s == "dec" => { *reg -= delta; }
             _ => panic!()
         }
+        highest = highest.max(*reg);
     }
     println!("{}", regs.values().max().unwrap());
+    println!("{}", highest);
 }
