@@ -11,8 +11,13 @@ fn main() {
     let mut ip: i32 = 0;
     let mut cnt = 0;
     while 0 <= ip && (ip as usize) < mem.len() {
-        mem[ip as usize] += 1;
-        ip += mem[ip as usize] - 1;
+        let m = &mut mem[ip as usize];
+        ip += *m;
+        if *m >= 3 {
+            *m -= 1;
+        } else {
+            *m += 1;
+        }
         cnt += 1;
     }
     println!("{}", cnt);
