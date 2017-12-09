@@ -2,25 +2,26 @@ use std::iter::Iterator;
 
 #[derive(Debug)]
 enum Node {
-    Garbage,
+    Garbage(i32),
     Group(Vec<Node>),
 }
 
-fn parse_garbage<I: Iterator<Item=char>>(it: &mut I) {
+fn parse_garbage<I: Iterator<Item=char>>(it: &mut I) -> i32 {
+    let mut cnt = 0;
     loop {
         match it.next().unwrap() {
             '!' => { it.next().unwrap(); }
             '>' => break,
-            _ => {}
+            _ => { cnt += 1; }
         }
     }
+    cnt
 }
 
 fn parse_node<I: Iterator<Item=char>>(it: &mut I) -> Option<Node> {
     match it.next().unwrap() {
         '<' => {
-            parse_garbage(it);
-            Some(Node::Garbage)
+            Some(Node::Garbage(parse_garbage(it)))
         }
         '{' => {
             let mut children = Vec::new();
@@ -45,9 +46,18 @@ fn parse_node<I: Iterator<Item=char>>(it: &mut I) -> Option<Node> {
 
 fn sum_score(node: &Node, depth: i32) -> i32 {
     match node {
-        &Node::Garbage => 0,
+        &Node::Garbage(_) => 0,
         &Node::Group(ref ns) => {
             ns.iter().map(|n| sum_score(n, depth + 1)).sum::<i32>() + depth
+        }
+    }
+}
+
+fn sum_garbage(node: &Node) -> i32 {
+    match node {
+        &Node::Garbage(n) => n,
+        &Node::Group(ref ns) => {
+            ns.iter().map(sum_garbage).sum()
         }
     }
 }
@@ -58,4 +68,5 @@ fn main() {
     stdin.read_line(&mut line).unwrap();
     let g = parse_node(&mut line.chars()).unwrap();
     println!("{}", sum_score(&g, 1));
+    println!("{}", sum_garbage(&g));
 }
