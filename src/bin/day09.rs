@@ -1,4 +1,4 @@
-use std::iter::Iterator;
+use std::iter::{Iterator, Peekable};
 
 #[derive(Debug)]
 enum Node {
@@ -6,7 +6,10 @@ enum Node {
     Group(Vec<Node>),
 }
 
-fn parse_garbage<I: Iterator<Item=char>>(it: &mut I) -> i32 {
+type PeekableCharIter<'a> = Peekable<Box<'a + Iterator<Item=char>>>;
+
+fn parse_garbage(it: &mut PeekableCharIter) -> i32 {
+    assert_eq!(it.next().unwrap(), '<');
     let mut cnt = 0;
     loop {
         match it.next().unwrap() {
@@ -18,28 +21,28 @@ fn parse_garbage<I: Iterator<Item=char>>(it: &mut I) -> i32 {
     cnt
 }
 
-fn parse_node<I: Iterator<Item=char>>(it: &mut I) -> Option<Node> {
-    match it.next().unwrap() {
-        '<' => {
-            Some(Node::Garbage(parse_garbage(it)))
+fn parse_group(it: &mut PeekableCharIter) -> Vec<Node> {
+    assert_eq!(it.next().unwrap(), '{');
+    let mut children = Vec::new();
+    if *it.peek().unwrap() == '}' {
+        it.next();
+        return children;
+    }
+    children.push(parse_node(it));
+    loop {
+        match it.next().unwrap() {
+            ',' => { children.push(parse_node(it)); }
+            '}' => break,
+            c => panic!("{}", c)
         }
-        '{' => {
-            let mut children = Vec::new();
-            match parse_node(it) {
-                Some(c) => { children.push(c); }
-                None => return Some(Node::Group(children))
-            }
-            loop {
-                match it.next().unwrap() {
-                    ',' => {}
-                    '}' => break,
-                    _ => panic!(),
-                }
-                children.push(parse_node(it).unwrap());
-            }
-            Some(Node::Group(children))
-        }
-        '}' => None,
+    }
+    children
+}
+
+fn parse_node(it: &mut PeekableCharIter) -> Node {
+    match *it.peek().unwrap() {
+        '<' => Node::Garbage(parse_garbage(it)),
+        '{' => Node::Group(parse_group(it)),
         c => panic!("{}", c),
     }
 }
@@ -66,7 +69,12 @@ fn main() {
     let stdin = std::io::stdin();
     let mut line = String::new();
     stdin.read_line(&mut line).unwrap();
-    let g = parse_node(&mut line.chars()).unwrap();
+    let it: Box<Iterator<Item=char>> = Box::new(line.chars());
+    let mut it = it.peekable();
+    let g = parse_node(&mut it);
+    while let Some(c) = it.next() {
+        assert!(c.is_whitespace(), "expected eof, got {:?}", c);
+    }
     println!("{}", sum_score(&g, 1));
     println!("{}", sum_garbage(&g));
 }
