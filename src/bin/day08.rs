@@ -33,11 +33,7 @@ fn main() {
             continue;
         }
 
-        let reg = &cap["reg"];
-        if !regs.contains_key(reg) {
-            regs.insert(reg.to_owned(), 0);
-        }
-        let reg = regs.get_mut(reg).unwrap();
+        let reg = regs.entry(cap["reg"].to_owned()).or_insert(0);
         let delta: i32 = cap["delta"].parse().unwrap();
 
         match &cap["op"] {
