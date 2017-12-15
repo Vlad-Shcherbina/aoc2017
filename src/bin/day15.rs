@@ -18,8 +18,10 @@ impl Iterator for Gen {
 fn main() {
     let  a = Gen {factor: 16807, x: 591};
     let  b = Gen {factor: 48271, x: 393};
+    let a = a.filter(|x| x % 4 == 0);
+    let b = b.filter(|x| x % 8 == 0);
     let mut cnt = 0;
-    for (x, y) in a.zip(b).take(40_000_000) {
+    for (x, y) in a.zip(b).take(5_000_000) {
         if x & MASK == y & MASK {
             cnt += 1;
         }
