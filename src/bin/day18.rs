@@ -1,10 +1,12 @@
 use std::io::BufRead;
+use std::collections::VecDeque;
+use std::cell::RefCell;
 
-type int = i64;
+type Int = i64;
 
 #[derive(Debug)]
 enum Value {
-    Const(int),
+    Const(Int),
     Reg(u8),
 }
 
@@ -15,13 +17,13 @@ fn parse_reg(s: &str) -> u8 {
 
 impl Value {
     fn parse(s: &str) -> Value {
-        match s.parse::<int>() {
+        match s.parse::<Int>() {
             Ok(i) => Value::Const(i),
             Err(_) => Value::Reg(parse_reg(s))
         }
     }
 
-    fn eval(&self, regs: &[int]) -> int {
+    fn eval(&self, regs: &[Int]) -> Int {
         match *self {
             Value::Const(c) => c,
             Value::Reg(r) => regs[r as usize],
@@ -71,6 +73,54 @@ impl Instr {
     }
 }
 
+struct State<'a> {
+    ip: Int,
+    regs: Vec<Int>,
+    incoming: &'a RefCell<VecDeque<Int>>,
+    outgoing: &'a RefCell<VecDeque<Int>>,
+    send_cnt: i32,
+}
+
+impl<'a> State<'a> {
+    fn new(incoming: &'a RefCell<VecDeque<Int>>,
+           outgoing: &'a RefCell<VecDeque<Int>>) -> Self {
+        State {
+            ip: 0,
+            regs: vec![0; 26],
+            incoming,
+            outgoing,
+            send_cnt: 0,
+        }
+    }
+
+    /// Returns false if blocked
+    fn step(&mut self, program: &[Instr]) -> bool {
+        match program[self.ip as usize] {
+            Instr::Snd(ref v) => {
+                self.outgoing.borrow_mut().push_back(v.eval(&self.regs));
+                self.send_cnt += 1;
+            }
+            Instr::Set(r, ref v) => self.regs[r as usize] = v.eval(&self.regs),
+            Instr::Add(r, ref v) => self.regs[r as usize] += v.eval(&self.regs),
+            Instr::Mul(r, ref v) => self.regs[r as usize] *= v.eval(&self.regs),
+            Instr::Mod(r, ref v) => self.regs[r as usize] %= v.eval(&self.regs),
+            Instr::Rcv(r) => {
+                match self.incoming.borrow_mut().pop_front() {
+                    Some(x) => self.regs[r as usize] = x,
+                    None => return false,
+                }
+            }
+            Instr::Jgz(ref v, ref offset) => {
+                if v.eval(&self.regs) > 0 {
+                    self.ip += offset.eval(&self.regs) - 1;
+                }
+            }
+        }
+        self.ip += 1;
+        true
+    }
+}
+
 fn main() {
     let stdin = std::io::stdin();
     let mut program = Vec::new();
@@ -79,28 +129,13 @@ fn main() {
         program.push(Instr::parse(&line));
     }
 
-    let mut ip: int = 0;
-    let mut regs = vec![0; 26];
-    let mut last_snd = None;
-    loop {
-        match program[ip as usize] {
-            Instr::Snd(ref v) => last_snd = Some(v.eval(&regs)),
-            Instr::Set(r, ref v) => regs[r as usize] = v.eval(&regs),
-            Instr::Add(r, ref v) => regs[r as usize] += v.eval(&regs),
-            Instr::Mul(r, ref v) => regs[r as usize] *= v.eval(&regs),
-            Instr::Mod(r, ref v) => regs[r as usize] %= v.eval(&regs),
-            Instr::Rcv(r) => {
-                if regs[r as usize] != 0 {
-                    break;
-                }
-            }
-            Instr::Jgz(ref v, ref offset) => {
-                if v.eval(&regs) > 0 {
-                    ip += offset.eval(&regs) - 1;
-                }
-            }
-        }
-        ip += 1;
-    }
-    println!("{:?}", last_snd);
+    let q0to1 = RefCell::new(VecDeque::new());
+    let q1to0 = RefCell::new(VecDeque::new());
+
+    let mut s0 = State::new(&q1to0, &q0to1);
+    let mut s1 = State::new(&q0to1, &q1to0);
+    s1.regs[parse_reg("p") as usize] = 1;
+
+    while s0.step(&program) || s1.step(&program) {}
+    println!("{}", s1.send_cnt);
 }
