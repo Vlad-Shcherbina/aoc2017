@@ -10,6 +10,7 @@ fn main() {
     let mut dx = 0;
     let mut dy = 1;
 
+    let mut cnt = 0;
     let mut s = String::new();
     loop {
         match lines[y as usize][x as usize] as char {
@@ -27,6 +28,7 @@ fn main() {
             c => s.push(c),
         }
         x += dx; y += dy;
+        cnt += 1;
     }
-    println!("{}", s);
+    println!("{} {}", s, cnt);
 }
