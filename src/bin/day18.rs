@@ -12,7 +12,7 @@ enum Value {
 
 fn parse_reg(s: &str) -> u8 {
     assert_eq!(s.len(), 1);
-    s.chars().next().unwrap() as u8 - 'a' as u8
+    s.chars().next().unwrap() as u8 - b'a'
 }
 
 impl Value {

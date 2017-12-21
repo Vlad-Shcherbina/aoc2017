@@ -42,9 +42,8 @@ fn main() {
         let mut s = 0;
         for dx in -1..2 {
             for dy in -1..2 {
-                match h.get(&(x + dx, y + dy)) {
-                    Some(v) => { s += v; }
-                    None => {}
+                if let Some(v) = h.get(&(x + dx, y + dy)) {
+                    s += v;
                 }
             }
         }

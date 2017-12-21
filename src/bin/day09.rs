@@ -48,18 +48,18 @@ fn parse_node(it: &mut PeekableCharIter) -> Node {
 }
 
 fn sum_score(node: &Node, depth: i32) -> i32 {
-    match node {
-        &Node::Garbage(_) => 0,
-        &Node::Group(ref ns) => {
+    match *node {
+        Node::Garbage(_) => 0,
+        Node::Group(ref ns) => {
             ns.iter().map(|n| sum_score(n, depth + 1)).sum::<i32>() + depth
         }
     }
 }
 
 fn sum_garbage(node: &Node) -> i32 {
-    match node {
-        &Node::Garbage(n) => n,
-        &Node::Group(ref ns) => {
+    match *node {
+        Node::Garbage(n) => n,
+        Node::Group(ref ns) => {
             ns.iter().map(sum_garbage).sum()
         }
     }
@@ -72,7 +72,7 @@ fn main() {
     let it: Box<Iterator<Item=char>> = Box::new(line.chars());
     let mut it = it.peekable();
     let g = parse_node(&mut it);
-    while let Some(c) = it.next() {
+    for c in it {
         assert!(c.is_whitespace(), "expected eof, got {:?}", c);
     }
     println!("{}", sum_score(&g, 1));

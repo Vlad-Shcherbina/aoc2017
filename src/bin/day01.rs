@@ -8,10 +8,10 @@ fn main() {
     let mut sum: i32 = 0;
     assert!(line.len() % 2 == 0);
     for (i, &c) in line.iter().enumerate() {
-        assert!(c >= '0' as u8 && c <= '9' as u8);
+        assert!(c >= b'0' && c <= b'9');
         let next = line[(i + line.len() / 2) % line.len()];
         if c == next {
-            sum += i32::from(c - ('0' as u8));
+            sum += i32::from(c - (b'0'));
         }
     }
     println!("{}", sum);

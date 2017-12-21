@@ -91,7 +91,7 @@ mod tests {
 }
 
 fn rec(
-        node: &String,
+        node: &str,
         weights: &HashMap<String, i32>,
         childrens: &HashMap<String, Vec<String>>) -> i32 {
     let mut total_weight = *weights.get(node).unwrap();
@@ -132,7 +132,7 @@ fn main() {
         weights.insert(name.to_owned(), weight);
         childrens.insert(name.to_owned(), Vec::new());
         let ch = childrens.get_mut(&name.to_owned()).unwrap();
-        for children in cap.get(3) {
+        if let Some(children) = cap.get(3) {
             for child in children.as_str().split(", ") {
                 parents.insert(child.to_owned(), name.to_owned());
                 ch.push(child.to_owned());
@@ -143,7 +143,7 @@ fn main() {
     for name in weights.keys() {
         if !parents.contains_key(name) {
             println!("{}", name);
-            rec(&name, &weights, &childrens);
+            rec(name, &weights, &childrens);
         }
     }
 }

@@ -44,9 +44,7 @@ fn sub(g: &Grid, i0: usize, j0: usize, n: usize) -> Grid {
 fn put_sub(g: &mut Grid, i0: usize, j0: usize, sg: &Grid) {
     let n = sg.len();
     for i in 0..n {
-        for j in 0..n {
-            g[i0 + i][j0 + j] = sg[i][j];
-        }
+        g[i0 + i][j0..(n + j0)].clone_from_slice(&sg[i][..n])
     }
 }
 
@@ -57,7 +55,7 @@ fn replace(g: &Grid, rules: &HashMap<Grid, Grid>, n1: usize, n2: usize) -> Grid 
     let mut result = vec![vec![0; k * n2]; k * n2];
     for i in 0..k {
         for j in 0..k {
-            let t = sub(&g, i * n1, j * n1, n1);
+            let t = sub(g, i * n1, j * n1, n1);
             let t = rules.get(&t).unwrap();
             assert_eq!(t.len(), n2);
             put_sub(&mut result, i * n2, j * n2, t);
@@ -70,7 +68,7 @@ fn count(g: &Grid) -> i32 {
     let mut cnt = 0;
     for row in g {
         for &e in row {
-            cnt += e as i32;
+            cnt += i32::from(e);
         }
     }
     cnt
@@ -87,9 +85,9 @@ fn rec(
     if let Some(&x) = cache.get(&(g.clone(), n)) {
         return x;
     }
-    let t = replace(g, &rules, 3, 4);
-    let t = replace(&t, &rules, 2, 3);
-    let t = replace(&t, &rules, 2, 3);
+    let t = replace(g, rules, 3, 4);
+    let t = replace(&t, rules, 2, 3);
+    let t = replace(&t, rules, 2, 3);
     let mut x = 0;
     for i in 0..3 {
         for j in 0..3 {

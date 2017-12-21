@@ -8,7 +8,7 @@ fn main() {
 
     let mut seen: Vec<Vec<char>> = Vec::new();
     let mut seen_at = std::collections::HashMap::new();
-    let mut names: Vec<char> = (0..16).map(|i| ('a' as u8 + i) as char).collect();
+    let mut names: Vec<char> = (0..16).map(|i| (b'a' + i) as char).collect();
     for i in 0..N {
         match seen_at.get(&names) {
             None => {}

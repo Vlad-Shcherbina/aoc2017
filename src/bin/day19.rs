@@ -5,7 +5,7 @@ fn main() {
     let lines: Vec<_> = stdin.lock().lines()
         .map(|line| line.unwrap().into_bytes()).collect();
 
-    let mut x = lines[0].iter().position(|&c| c == '|' as u8).unwrap() as i32;
+    let mut x = lines[0].iter().position(|&c| c == b'|').unwrap() as i32;
     let mut y = 0;
     let mut dx = 0;
     let mut dy = 1;
@@ -19,7 +19,7 @@ fn main() {
                 let t = dx;
                 dx = dy;
                 dy = -t;
-                if lines[(y + dy) as usize][(x + dx) as usize] == ' ' as u8 {
+                if lines[(y + dy) as usize][(x + dx) as usize] == b' ' {
                     dx = -dx;
                     dy = -dy;
                 }
