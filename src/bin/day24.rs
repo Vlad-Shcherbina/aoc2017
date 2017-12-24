@@ -1,15 +1,16 @@
 use std::io::BufRead;
 use std::collections::HashMap;
 
-fn rec(end: i32, adj: &mut HashMap<i32, HashMap<i32, i32>>) -> i32 {
+fn rec(end: i32, adj: &mut HashMap<i32, HashMap<i32, i32>>) -> (i32, i32) {
     let vs: Vec<i32> = adj[&end].iter()
         .filter_map(|(&v, &cnt)| if cnt > 0 { Some(v) } else { None })
         .collect();
-    let mut best = 0;
+    let mut best = (0, 0);
     for v in vs {
         *adj.get_mut(&end).unwrap().get_mut(&v).unwrap() -= 1;
         *adj.get_mut(&v).unwrap().get_mut(&end).unwrap() -= 1;
-        best = best.max(end + v + rec(v, adj));
+        let (length, strength) = rec(v, adj);
+        best = best.max((length + 1, strength + end + v));
         *adj.get_mut(&end).unwrap().get_mut(&v).unwrap() += 1;
         *adj.get_mut(&v).unwrap().get_mut(&end).unwrap() += 1;
     }
@@ -36,5 +37,5 @@ fn main() {
             *ee += 1;
         }
     }
-    println!("{}", rec(0, &mut adj));
+    println!("{}", rec(0, &mut adj).1);
 }
