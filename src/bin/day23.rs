@@ -30,6 +30,13 @@ impl Val {
             Const(c) => c,
         }
     }
+
+    fn to_string(&self) -> String {
+        match *self {
+            Reg(r) => reg_to_char(r).to_string(),
+            Const(c) => c.to_string(),
+        }
+    }
 }
 
 enum Instr {
@@ -55,6 +62,10 @@ fn parse_instr(s: &str) -> Instr {
     }
 }
 
+fn reg_to_char(r: usize) -> char {
+    ('a' as u8 + r as u8) as char
+}
+
 fn main () {
     let stdin = std::io::stdin();
     let mut code = Vec::new();
@@ -62,24 +73,24 @@ fn main () {
         code.push(parse_instr(&line.unwrap()));
     }
 
-    let mut cnt = 0;
-    let mut regs = [0i32; 8];
-    let mut ip = 0;
-    while ip as usize != code.len() {
-        match code[ip as usize] {
-            Set(r, ref v) => regs[r] = v.eval(&regs),
-            Sub(r, ref v) => regs[r] -= v.eval(&regs),
-            Mul(r, ref v) => {
-                regs[r] *= v.eval(&regs);
-                cnt += 1;
-            }
-            Jnz(ref v, d) => {
-                if v.eval(&regs) != 0 {
-                    ip += d - 1;
-                }
-            }
+    let mut labels = vec![false; code.len() + 1];
+    for (i, instr) in code.iter().enumerate() {
+        if let &Jnz(_, d) = instr {
+            labels[(i as i32 + d) as usize] = true;
         }
-        ip += 1;
     }
-    println!("{}", cnt);
+
+    for (i, instr) in code.iter().enumerate() {
+        if labels[i] {
+            println!("label_{}:", i);
+        }
+        match *instr {
+            Set(r, ref v) => println!("{} = {}", reg_to_char(r), v.to_string()),
+            Sub(r, ref v) => println!("{} -= {}", reg_to_char(r), v.to_string()),
+            Mul(r, ref v) => println!("{} *= {}", reg_to_char(r), v.to_string()),
+            Jnz(ref v, d) => println!("if {} != 0 goto label_{}", v.to_string(), i as i32 + d),
+            Set(r, ref v) => println!("{} = {}", reg_to_char(r), v.to_string()),
+            _ => {}
+        }
+    }
 }
